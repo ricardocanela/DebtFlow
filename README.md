@@ -8,7 +8,7 @@
 > **Hey Aktos recruiters!** If you're checking this out, I'd love to work with you! 😄 Feel free to get inspired by this code and let me know if you want me to make this repo private.  
 > I am working on something beautiful for Aktos. Wait for it.
 
-**Debt Collection Management Platform** — A backend system for debt collection agencies to manage delinquent accounts, process payments, and ingest data via SFTP.
+**Debt Collection Management Platform** — A production-ready backend system for debt collection agencies to manage delinquent accounts, process payments, and ingest portfolio data via SFTP.
 
 ## Architecture
 
@@ -99,6 +99,61 @@ Once running, access the interactive API docs at:
 | `POST /api/v1/payments/webhook/stripe/` | Stripe webhook |
 | `GET /api/v1/imports/` | List SFTP import jobs |
 | `GET /api/v1/analytics/dashboard/` | Dashboard KPIs |
+
+## Data Ingestion
+
+The platform automatically ingests debt portfolio files from creditor clients via **SFTP polling**.
+
+### How It Works
+
+1. **Scheduled Polling**: Celery Beat runs `sftp_poll_all_agencies` every 15 minutes
+2. **File Discovery**: For each active agency with SFTP enabled, the system:
+   - Connects to the configured SFTP server
+   - Lists CSV files in the remote directory
+   - Downloads new files to temporary storage
+3. **Async Processing**: Each file triggers a Celery task (`process_import_file`) that:
+   - Parses the CSV with Pydantic validation
+   - Processes records in batches of 1000
+   - Upserts `Debtor` records by `external_ref`
+   - Creates/updates `Account` records by `external_ref`
+   - Isolates errors per row (one bad record doesn't block the batch)
+4. **Job Tracking**: Each import creates an `SFTPImportJob` record with:
+   - Status (processing, completed, failed)
+   - Counts (total, processed_ok, processed_errors)
+   - Error details with line numbers and validation messages
+
+### Reliability Features
+
+- **Idempotency**: Imports are idempotent via `update_or_create` on `external_ref`. Re-importing the same file updates existing records instead of creating duplicates.
+- **Retry Logic**: 
+  - Polling task (`sftp_poll_all_agencies`): 3 retries with 60s delay on transient failures
+  - Import task (`process_import_file`): 2 retries with 120s delay on processing errors
+  - Failed imports are tracked in `SFTPImportJob` with detailed error logs for debugging
+
+### CSV Format
+
+Required columns:
+- `external_ref` (unique identifier)
+- `debtor_name`
+- `original_amount` (must be positive)
+
+Optional columns:
+- `debtor_ssn_last4` (exactly 4 digits)
+- `debtor_email`
+- `debtor_phone`
+- `due_date` (YYYY-MM-DD format)
+- `creditor_name`
+- `account_type`
+
+### Testing SFTP Ingestion
+
+```bash
+# Upload test CSV files to the SFTP test server
+python scripts/sftp_test_upload.py
+
+# Check import jobs via API
+curl -H "Authorization: Bearer <token>" http://localhost:8000/api/v1/imports/
+```
 
 ## Testing
 
