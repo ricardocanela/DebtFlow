@@ -67,3 +67,21 @@ variable "eks_node_desired_size" {
   type        = number
   default     = 3
 }
+
+variable "domain_name" {
+  description = "Root domain name for Route53 and ACM (e.g. debtflow.example.com)"
+  type        = string
+  default     = ""
+}
+
+variable "create_dns" {
+  description = "Whether to create Route53 and ACM resources"
+  type        = bool
+  default     = false
+}
+
+variable "eks_namespace" {
+  description = "Kubernetes namespace for DebtFlow workloads"
+  type        = string
+  default     = "debtflow"
+}

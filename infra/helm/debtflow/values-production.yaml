@@ -3,6 +3,7 @@ replicaCount:
   api: 3
   worker: 2
   beat: 1
+  frontend: 2
 
 resources:
   api:
@@ -19,6 +20,20 @@ resources:
     limits:
       cpu: 1000m
       memory: 1Gi
+  beat:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+  frontend:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
 
 hpa:
   enabled: true
@@ -32,6 +47,8 @@ pdb:
 
 ingress:
   host: debtflow.example.com
+  tls:
+    enabled: true
 
 env:
   DJANGO_SETTINGS_MODULE: config.settings.production

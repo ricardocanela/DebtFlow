@@ -1,0 +1,11 @@
+external_ref,debtor_name,debtor_ssn_last4,debtor_email,debtor_phone,original_amount,due_date,creditor_name,account_type
+IMP-50016,Franklin Dubois,5512,f.dubois@gmail.com,+17145556677,9870.00,2025-07-01,Continental Finance,credit_card
+IMP-50017,Rachel Goldstein,2289,rachel.g@outlook.com,+12125558899,3210.75,2025-11-12,Metro Health Systems,medical
+IMP-50018,Carlos Mendez,7741,,+12105550011,14500.00,2025-05-20,Premier Auto Group,auto_loan
+IMP-50019,Emily Watson,3398,emily.watson@gmail.com,+15125552233,2780.00,2026-01-05,Lakeside Rentals,rent
+IMP-50020,Jerome Jackson,1156,j.jackson@yahoo.com,+14045554455,6150.50,2025-10-30,National Student Aid,student_loan
+IMP-50021,Hannah Schmidt,8834,h.schmidt@gmail.com,+16175556677,1920.00,2025-12-15,BayState Medical,medical
+IMP-50022,invalid_entry,,,,not_a_number,bad-date,Test Corp,unknown
+IMP-50023,Omar Al-Rashid,4467,omar.ar@gmail.com,+13125558899,5430.00,2025-09-10,Midwest Credit Union,personal_loan
+IMP-50024,Victoria Chang,6601,v.chang@outlook.com,+14155550022,8760.25,2025-08-25,Pacific Rim Trading,retail
+IMP-50025,Timothy O'Brien,9923,t.obrien@gmail.com,+16465553344,3340.00,2026-02-10,Atlantic Health Network,medical

@@ -1,0 +1,16 @@
+external_ref,debtor_name,debtor_ssn_last4,debtor_email,debtor_phone,original_amount,due_date,creditor_name,account_type
+IMP-50001,Angela Foster,7823,angela.foster@gmail.com,+12145551234,3450.00,2025-11-15,National Credit Corp,credit_card
+IMP-50002,Marcus Reed,4512,marcus.reed@yahoo.com,+13125559876,8920.50,2025-10-01,Premier Healthcare,medical
+IMP-50003,Diana Alvarez,9034,diana.alvarez@gmail.com,+17135554567,1275.00,2025-12-20,AutoLend Financial,auto_loan
+IMP-50004,Brian O'Sullivan,6178,brian.osullivan@hotmail.com,+16175553210,15600.00,2025-09-05,Eastside Properties LLC,rent
+IMP-50005,Keisha Williams,3345,keisha.w@gmail.com,+14045558901,4780.25,2025-08-30,Valley Medical Center,medical
+IMP-50006,Robert Chen,8891,robert.chen@outlook.com,+14155552345,2100.00,2026-01-10,TechMart Electronics,retail
+IMP-50007,Sandra Petrov,2267,sandra.petrov@gmail.com,+12125556789,6340.75,2025-07-22,First National Bank,personal_loan
+IMP-50008,Juan Ramirez,5590,,+12105553456,920.00,2025-11-30,CityWide Utilities,utilities
+IMP-50009,Patricia Hayes,1123,p.hayes@yahoo.com,+15035554321,11250.00,2025-06-15,Pacific Coast Lending,student_loan
+IMP-50010,Derek Washington,7745,derek.wash@gmail.com,+14435557890,3890.00,2026-02-01,Northstar Collections,credit_card
+IMP-50011,Lisa Nakamura,4401,lisa.nakamura@gmail.com,+12065551111,5670.30,2025-10-18,Wellness Health Group,medical
+IMP-50012,Anthony Morales,6632,a.morales@outlook.com,+16025552222,7450.00,2025-09-28,Southwest Auto Sales,auto_loan
+IMP-50013,Catherine Blake,8819,c.blake@gmail.com,,2340.00,2025-12-05,Heritage Apartments,rent
+IMP-50014,Stephen Park,3356,stephen.park@yahoo.com,+16465553333,1890.50,2026-01-20,QuickLoans Direct,personal_loan
+IMP-50015,Michelle Torres,9974,m.torres@gmail.com,+13055554444,4120.00,2025-08-10,Sunshine State Medical,medical

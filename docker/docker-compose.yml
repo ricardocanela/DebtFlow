@@ -104,10 +104,24 @@ services:
       - ../monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - ../monitoring/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml
 
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ../frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000/api/v1
+    depends_on:
+      - api
+    command: sh -c "npm install && npm run dev"
+
   grafana:
     image: grafana/grafana:latest
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
@@ -116,3 +130,4 @@ services:
 
 volumes:
   pgdata:
+  frontend_node_modules:

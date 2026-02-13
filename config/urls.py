@@ -5,12 +5,15 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from apps.accounts.auth import UserProfileView
+
 urlpatterns = [
     # Admin
     path("admin/", admin.site.urls),
     # JWT Auth
     path("api/v1/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/v1/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/v1/auth/me/", UserProfileView.as_view(), name="user_profile"),
     # API
     path("api/v1/", include("apps.accounts.urls")),
     path("api/v1/", include("apps.payments.urls")),

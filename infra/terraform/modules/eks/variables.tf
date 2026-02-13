@@ -33,3 +33,9 @@ variable "node_desired_size" {
   type    = number
   default = 3
 }
+
+variable "ebs_csi_role_arn" {
+  description = "IAM role ARN for EBS CSI driver (optional)"
+  type        = string
+  default     = null
+}

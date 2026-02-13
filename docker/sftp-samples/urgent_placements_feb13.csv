@@ -1,0 +1,6 @@
+external_ref,debtor_name,debtor_ssn_last4,debtor_email,debtor_phone,original_amount,due_date,creditor_name,account_type
+IMP-60001,Nathan Brooks,4421,nathan.brooks@gmail.com,+15615559001,7250.00,2025-12-01,Atlantic Financial Group,credit_card
+IMP-60002,Sophia Reyes,8837,sophia.reyes@outlook.com,+13055559002,2890.50,2025-10-15,Suncoast Medical Center,medical
+IMP-60003,William Foster,1154,w.foster@yahoo.com,+12015559003,18400.00,2025-08-20,Northeast Auto Lending,auto_loan
+IMP-60004,Olivia Kim,6692,olivia.kim@gmail.com,+16265559004,4120.75,2026-01-30,Pacific Realty Management,rent
+IMP-60005,Ethan Cooper,3378,ethan.cooper@gmail.com,+19175559005,1650.00,2025-11-10,Empire State Utilities,utilities

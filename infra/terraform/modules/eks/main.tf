@@ -4,8 +4,8 @@ resource "aws_iam_role" "cluster" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = { Service = "eks.amazonaws.com" }
     }]
   })
@@ -34,8 +34,8 @@ resource "aws_iam_role" "node" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = { Service = "ec2.amazonaws.com" }
     }]
   })
@@ -85,4 +85,34 @@ resource "aws_iam_openid_connect_provider" "cluster" {
   url             = aws_eks_cluster.main.identity[0].oidc[0].issuer
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.cluster.certificates[0].sha1_fingerprint]
+}
+
+# EKS Managed Addons
+resource "aws_eks_addon" "coredns" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "coredns"
+
+  depends_on = [aws_eks_node_group.main]
+}
+
+resource "aws_eks_addon" "kube_proxy" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "kube-proxy"
+
+  depends_on = [aws_eks_node_group.main]
+}
+
+resource "aws_eks_addon" "vpc_cni" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "vpc-cni"
+
+  depends_on = [aws_eks_node_group.main]
+}
+
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name             = aws_eks_cluster.main.name
+  addon_name               = "aws-ebs-csi-driver"
+  service_account_role_arn = var.ebs_csi_role_arn
+
+  depends_on = [aws_eks_node_group.main]
 }

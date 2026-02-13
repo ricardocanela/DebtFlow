@@ -1,0 +1,71 @@
+/* Global reset and DebtFlow base styles */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dense table rows for power users */
+.ant-table-small .ant-table-tbody > tr > td {
+  padding: 6px 8px !important;
+}
+
+/* Hover effect for search results */
+.search-result-item:hover {
+  background-color: #f5f5f5;
+}
+
+/* Selected row highlight */
+.ant-table-row-selected > td {
+  background-color: #e6f4ff !important;
+}
+
+/* Keyboard hint styling refinement */
+.ant-tag {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Timeline dense mode */
+.ant-timeline-item {
+  padding-bottom: 12px;
+}
+
+/* Scrollbar styling for timeline panel */
+.ant-card-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ant-card-body::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 3px;
+}
+
+.ant-card-body::-webkit-scrollbar-thumb:hover {
+  background: #bfbfbf;
+}
+
+/* Print-friendly: hide sidebar + header */
+@media print {
+  .ant-layout-sider,
+  .ant-layout-header {
+    display: none !important;
+  }
+  .ant-layout-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

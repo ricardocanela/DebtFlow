@@ -4,8 +4,20 @@ metadata:
   name: {{ .Release.Name }}-config
 data:
   DJANGO_SETTINGS_MODULE: {{ .Values.env.DJANGO_SETTINGS_MODULE }}
+  DJANGO_ALLOWED_HOSTS: {{ .Values.ingress.host | quote }}
+  CORS_ALLOWED_ORIGINS: "https://{{ .Values.ingress.host }}"
   DATABASE_HOST: {{ .Values.database.host }}
   DATABASE_PORT: "{{ .Values.database.port }}"
   DATABASE_NAME: {{ .Values.database.name }}
+  DATABASE_USER: "debtflow"
   REDIS_URL: "redis://{{ .Values.redis.host }}:{{ .Values.redis.port }}/0"
   CELERY_BROKER_URL: "redis://{{ .Values.redis.host }}:{{ .Values.redis.port }}/1"
+  SFTP_HOST: {{ .Values.sftp.host | quote }}
+  SFTP_PORT: "{{ .Values.sftp.port }}"
+  SFTP_USER: {{ .Values.sftp.user | quote }}
+  SFTP_REMOTE_DIR: {{ .Values.sftp.remoteDir | quote }}
+  AWS_STORAGE_BUCKET_NAME: {{ .Values.aws.s3Bucket | quote }}
+  AWS_S3_REGION_NAME: {{ .Values.aws.region | quote }}
+  JWT_ACCESS_TOKEN_LIFETIME_MINUTES: "{{ .Values.jwt.accessLifetimeMinutes }}"
+  JWT_REFRESH_TOKEN_LIFETIME_DAYS: "{{ .Values.jwt.refreshLifetimeDays }}"
+  SENTRY_DSN: {{ .Values.sentry.dsn | default "" | quote }}

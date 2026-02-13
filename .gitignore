@@ -70,3 +70,12 @@ celerybeat.pid
 # Secrets
 *.pem
 *.key
+
+# Study (Portuguese docs / personal notes)
+study/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.development.local

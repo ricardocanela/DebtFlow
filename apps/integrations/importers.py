@@ -53,9 +53,10 @@ class BatchImporter:
                 self.import_job.processed_errors += len(batch_errors)
 
         self.import_job.processed_ok = processed_ok
-        self.import_job.status = (
-            SFTPImportJob.Status.COMPLETED if self.import_job.processed_errors == 0 else SFTPImportJob.Status.FAILED
-        )
+        if processed_ok == 0 and self.import_job.processed_errors > 0:
+            self.import_job.status = SFTPImportJob.Status.FAILED
+        else:
+            self.import_job.status = SFTPImportJob.Status.COMPLETED
         self.import_job.completed_at = timezone.now()
         self.import_job.save()
 

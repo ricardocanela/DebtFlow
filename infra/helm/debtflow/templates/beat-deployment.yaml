@@ -17,10 +17,11 @@ spec:
         app: debtflow
         component: beat
     spec:
+      serviceAccountName: {{ .Release.Name }}-worker
       containers:
         - name: beat
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.image.api.repository }}:{{ .Values.image.api.tag }}"
+          imagePullPolicy: {{ .Values.image.api.pullPolicy }}
           command: ["celery", "-A", "config.celery", "beat", "--loglevel=info"]
           envFrom:
             - configMapRef:
@@ -28,9 +29,4 @@ spec:
             - secretRef:
                 name: {{ .Release.Name }}-secret
           resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
+            {{- toYaml .Values.resources.beat | nindent 12 }}

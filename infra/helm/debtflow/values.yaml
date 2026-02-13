@@ -3,11 +3,23 @@ replicaCount:
   api: 2
   worker: 2
   beat: 1
+  frontend: 2
 
 image:
-  repository: debtflow
-  tag: latest
-  pullPolicy: IfNotPresent
+  api:
+    repository: debtflow-api
+    tag: latest
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: debtflow-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+serviceAccount:
+  api:
+    annotations: {}
+  worker:
+    annotations: {}
 
 service:
   type: ClusterIP
@@ -17,10 +29,14 @@ ingress:
   enabled: true
   className: alb
   host: debtflow.example.com
+  tls:
+    enabled: false
+    secretName: ""
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
 
 resources:
   api:
@@ -37,6 +53,20 @@ resources:
     limits:
       cpu: 500m
       memory: 512Mi
+  beat:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+  frontend:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
 
 hpa:
   enabled: true
@@ -62,3 +92,27 @@ redis:
 
 celery:
   concurrency: 4
+
+sftp:
+  host: ""
+  port: 22
+  user: sftpuser
+  remoteDir: /upload
+
+aws:
+  s3Bucket: ""
+  region: us-east-1
+
+jwt:
+  accessLifetimeMinutes: 15
+  refreshLifetimeDays: 7
+
+sentry:
+  dsn: ""
+
+secrets:
+  djangoSecretKey: ""
+  databasePassword: ""
+  stripeApiKey: ""
+  stripeWebhookSecret: ""
+  sftpPassword: ""

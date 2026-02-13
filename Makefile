@@ -75,6 +75,19 @@ tf-plan: ## Plan Terraform changes
 tf-validate: ## Validate Terraform
 	cd infra/terraform && terraform validate
 
+# Frontend
+frontend-install: ## Install frontend dependencies
+	cd frontend && npm install
+
+frontend-dev: ## Start frontend dev server
+	cd frontend && npm run dev
+
+frontend-build: ## Build frontend for production
+	cd frontend && npm run build
+
+frontend-lint: ## Lint frontend code
+	cd frontend && npm run lint
+
 # Cleanup
 clean: ## Remove cached files
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

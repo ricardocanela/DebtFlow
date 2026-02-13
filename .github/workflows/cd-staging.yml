@@ -10,7 +10,8 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: debtflow
+  ECR_API_REPOSITORY: debtflow-api-staging
+  ECR_FRONTEND_REPOSITORY: debtflow-frontend-staging
   EKS_CLUSTER: debtflow-staging
 
 jobs:
@@ -31,14 +32,29 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build & Push Docker image
+      - name: Build & Push API image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -f docker/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker build -f docker/Dockerfile \
+            -t $ECR_REGISTRY/$ECR_API_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_API_REPOSITORY:latest .
+          docker push $ECR_REGISTRY/$ECR_API_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_API_REPOSITORY:latest
+
+      - name: Build & Push Frontend image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f frontend/Dockerfile \
+            --build-arg VITE_API_BASE_URL=/api/v1 \
+            -t $ECR_REGISTRY/$ECR_FRONTEND_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_FRONTEND_REPOSITORY:latest \
+            frontend/
+          docker push $ECR_REGISTRY/$ECR_FRONTEND_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_FRONTEND_REPOSITORY:latest
 
       - name: Configure kubectl
         run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
@@ -50,8 +66,10 @@ jobs:
         run: |
           helm upgrade --install debtflow infra/helm/debtflow \
             -f infra/helm/debtflow/values-staging.yaml \
-            --set image.repository=$ECR_REGISTRY/$ECR_REPOSITORY \
-            --set image.tag=$IMAGE_TAG \
+            --set image.api.repository=$ECR_REGISTRY/$ECR_API_REPOSITORY \
+            --set image.api.tag=$IMAGE_TAG \
+            --set image.frontend.repository=$ECR_REGISTRY/$ECR_FRONTEND_REPOSITORY \
+            --set image.frontend.tag=$IMAGE_TAG \
             --wait --timeout 5m
 
       - name: Health check

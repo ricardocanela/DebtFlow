@@ -23,6 +23,9 @@ class ImportJobViewSet(viewsets.ReadOnlyModelViewSet):
         collector = getattr(user, "collector_profile", None)
         if collector:
             return SFTPImportJob.objects.filter(agency=collector.agency)
+        # agency_admin without collector profile — show all jobs for their agencies
+        if user.groups.filter(name="agency_admin").exists():
+            return SFTPImportJob.objects.all()
         return SFTPImportJob.objects.none()
 
     def get_serializer_class(self):

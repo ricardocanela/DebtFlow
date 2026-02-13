@@ -3,6 +3,7 @@ replicaCount:
   api: 1
   worker: 1
   beat: 1
+  frontend: 1
 
 resources:
   api:
@@ -19,6 +20,20 @@ resources:
     limits:
       cpu: 250m
       memory: 256Mi
+  beat:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+  frontend:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
 
 hpa:
   enabled: false

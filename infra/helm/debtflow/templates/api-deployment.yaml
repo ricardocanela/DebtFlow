@@ -22,10 +22,11 @@ spec:
         app: debtflow
         component: api
     spec:
+      serviceAccountName: {{ .Release.Name }}-api
       containers:
         - name: api
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.image.api.repository }}:{{ .Values.image.api.tag }}"
+          imagePullPolicy: {{ .Values.image.api.pullPolicy }}
           ports:
             - containerPort: 8000
           envFrom:

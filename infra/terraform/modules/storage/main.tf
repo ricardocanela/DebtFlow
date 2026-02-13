@@ -28,6 +28,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "main" {
     id     = "archive-old-files"
     status = "Enabled"
 
+    filter {}
+
     transition {
       days          = 90
       storage_class = "GLACIER"

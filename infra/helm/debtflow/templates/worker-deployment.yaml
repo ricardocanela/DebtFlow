@@ -17,10 +17,11 @@ spec:
         app: debtflow
         component: worker
     spec:
+      serviceAccountName: {{ .Release.Name }}-worker
       containers:
         - name: worker
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.image.api.repository }}:{{ .Values.image.api.tag }}"
+          imagePullPolicy: {{ .Values.image.api.pullPolicy }}
           command: ["celery", "-A", "config.celery", "worker", "--loglevel=info", "--concurrency={{ .Values.celery.concurrency }}"]
           envFrom:
             - configMapRef:

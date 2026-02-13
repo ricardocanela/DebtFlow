@@ -3,15 +3,16 @@ kind: CronJob
 metadata:
   name: {{ .Release.Name }}-vacuum
 spec:
-  schedule: "0 3 * * 0"  # Sunday 3 AM
+  schedule: "0 3 * * 0"
   jobTemplate:
     spec:
       template:
         spec:
+          serviceAccountName: {{ .Release.Name }}-worker
           restartPolicy: OnFailure
           containers:
             - name: vacuum
-              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              image: "{{ .Values.image.api.repository }}:{{ .Values.image.api.tag }}"
               command: ["python", "-c", "import django; django.setup(); from tasks.maintenance import vacuum_tables; vacuum_tables()"]
               envFrom:
                 - configMapRef:
@@ -24,15 +25,16 @@ kind: CronJob
 metadata:
   name: {{ .Release.Name }}-audit-cleanup
 spec:
-  schedule: "0 2 1 * *"  # 1st of month, 2 AM
+  schedule: "0 2 1 * *"
   jobTemplate:
     spec:
       template:
         spec:
+          serviceAccountName: {{ .Release.Name }}-worker
           restartPolicy: OnFailure
           containers:
             - name: audit-cleanup
-              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              image: "{{ .Values.image.api.repository }}:{{ .Values.image.api.tag }}"
               command: ["python", "-c", "import django; django.setup(); from tasks.maintenance import archive_audit_logs; archive_audit_logs()"]
               envFrom:
                 - configMapRef:
