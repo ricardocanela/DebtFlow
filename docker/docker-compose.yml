@@ -1,0 +1,118 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env.example
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+      - DATABASE_HOST=postgres
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - SFTP_HOST=sftp-test-server
+      - SFTP_PORT=22
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ..:/app
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    env_file:
+      - ../.env.example
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+      - DATABASE_HOST=postgres
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - SFTP_HOST=sftp-test-server
+      - SFTP_PORT=22
+    depends_on:
+      - api
+      - redis
+    volumes:
+      - ..:/app
+    command: celery -A config.celery worker --loglevel=info --concurrency=2
+
+  beat:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    env_file:
+      - ../.env.example
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+      - DATABASE_HOST=postgres
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+    depends_on:
+      - api
+      - redis
+    volumes:
+      - ..:/app
+    command: celery -A config.celery beat --loglevel=info
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: debtflow
+      POSTGRES_USER: debtflow
+      POSTGRES_PASSWORD: debtflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U debtflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  sftp-test-server:
+    image: atmoz/sftp:latest
+    ports:
+      - "2222:22"
+    command: sftpuser:sftppass:::upload
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ../monitoring/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ../monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ../monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+
+volumes:
+  pgdata:

@@ -1,0 +1,11 @@
+environment            = "staging"
+aws_region             = "us-east-1"
+vpc_cidr               = "10.0.0.0/16"
+availability_zones     = ["us-east-1a", "us-east-1b"]
+db_instance_class      = "db.t3.micro"
+db_allocated_storage   = 20
+cache_node_type        = "cache.t3.micro"
+eks_node_instance_type = "t3.medium"
+eks_node_min_size      = 1
+eks_node_max_size      = 3
+eks_node_desired_size  = 2

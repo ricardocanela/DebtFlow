@@ -1,0 +1,43 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+      - DATABASE_HOST=postgres
+      - DATABASE_NAME=debtflow_test
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ..:/app
+    command: >
+      sh -c "pip install -r requirements/test.txt &&
+             python -m pytest apps/ --tb=short -q --cov=apps --cov-report=term-missing"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: debtflow_test
+      POSTGRES_USER: debtflow
+      POSTGRES_PASSWORD: debtflow
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U debtflow"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 5

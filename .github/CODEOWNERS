@@ -1,0 +1,10 @@
+# Default owners
+* @ricardocanela
+
+# Infrastructure
+infra/ @ricardocanela
+.github/workflows/ @ricardocanela
+
+# Backend
+apps/ @ricardocanela
+config/ @ricardocanela

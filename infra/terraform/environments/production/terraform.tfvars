@@ -1,0 +1,11 @@
+environment            = "production"
+aws_region             = "us-east-1"
+vpc_cidr               = "10.1.0.0/16"
+availability_zones     = ["us-east-1a", "us-east-1b"]
+db_instance_class      = "db.r6g.large"
+db_allocated_storage   = 100
+cache_node_type        = "cache.r6g.large"
+eks_node_instance_type = "t3.large"
+eks_node_min_size      = 3
+eks_node_max_size      = 10
+eks_node_desired_size  = 5

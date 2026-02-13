@@ -1,0 +1,36 @@
+# Staging overrides
+replicaCount:
+  api: 1
+  worker: 1
+  beat: 1
+
+resources:
+  api:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  worker:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+hpa:
+  enabled: false
+
+pdb:
+  enabled: false
+
+ingress:
+  host: staging.debtflow.example.com
+
+env:
+  DJANGO_SETTINGS_MODULE: config.settings.staging
+
+celery:
+  concurrency: 2
