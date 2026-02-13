@@ -4,11 +4,68 @@
 [![Coverage](https://codecov.io/gh/ricardocanela/debtflow/branch/main/graph/badge.svg)](https://codecov.io/gh/ricardocanela/debtflow)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
 [![Django 5.1](https://img.shields.io/badge/django-5.1-green.svg)](https://docs.djangoproject.com/en/5.1/)
+[![React 18](https://img.shields.io/badge/react-18-61dafb.svg)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/typescript-5-blue.svg)](https://www.typescriptlang.org/)
+[![Terraform](https://img.shields.io/badge/terraform-aws-purple.svg)](https://www.terraform.io/)
+[![Kubernetes](https://img.shields.io/badge/k8s-helm-blue.svg)](https://kubernetes.io/)
 
-> **Hey Aktos recruiters!** If you're checking this out, I'd love to work with you! 😄 Feel free to get inspired by this code and let me know if you want me to make this repo private.  
-> I am working on something beautiful for Aktos. Wait for it.
+> **To the Aktos team** — I built this to show what I can deliver. DebtFlow is a fully working debt collection platform with the same core workflows you manage at Aktos: SFTP ingestion, account state machines, collector worklists, payment processing, and real-time analytics. Every layer is production-grade — from the React frontend to Terraform on AWS. Clone it, run `make reset`, and see it live in under 2 minutes.
 
-**Debt Collection Management Platform** — A full-stack, production-ready system for collection agencies to manage delinquent accounts, process payments, and ingest portfolio data via SFTP.
+---
+
+**DebtFlow is a full-stack debt collection management platform.** It ingests debtor portfolios via SFTP, distributes accounts to collectors, tracks every contact and payment, and delivers real-time analytics — all on a cloud-native, audit-ready infrastructure.
+
+## Try It Now
+
+```bash
+git clone https://github.com/ricardocanela/debtflow.git && cd debtflow
+make reset    # builds everything, seeds data, uploads SFTP samples (~2 min)
+```
+
+Then open **http://localhost:3000** and log in:
+
+| Role | Username | Password |
+|------|----------|----------|
+| **Agency Admin** | `demo.admin` | `Demo@2026` |
+| **Collector** | `sarah.mitchell` | `Collector@2026` |
+
+The admin sees the full dashboard, analytics, imports, and settings. The collector sees only their assigned worklist.
+
+---
+
+## What It Does
+
+```
+SFTP Server                    DebtFlow                           Frontend
+    │                             │                                  │
+    │  CSV files (portfolios)     │                                  │
+    ├────────────────────────────►│  Celery polls every 15 min       │
+    │                             │  Pydantic validates each row     │
+    │                             │  Upserts Debtor + Account        │
+    │                             │                                  │
+    │                             │  Admin assigns → Collectors      │
+    │                             │  Collectors work accounts        │
+    │                             │  Payments via Stripe             │
+    │                             │                                  │
+    │                             │  KPIs, trends, aging reports ───►│  Real-time dashboards
+    │                             │  Audit trail for every action    │
+```
+
+### Core Workflow
+
+| Step | What Happens | Status |
+|------|-------------|--------|
+| **Import** | CSV arrives via SFTP, Celery processes in batches of 1000 | `NEW` |
+| **Assign** | Admin distributes accounts to collectors | `ASSIGNED` |
+| **Contact** | Collector reaches debtor, logs notes | `IN_CONTACT` |
+| **Negotiate** | Payment terms discussed | `NEGOTIATING` |
+| **Plan** | Debtor agrees to payment plan | `PAYMENT_PLAN` |
+| **Collect** | Payments recorded (Stripe or manual), balance auto-updated | `SETTLED` |
+| **Close** | Debt resolved, commission calculated | `CLOSED` |
+
+Every transition is validated by a **state machine** — no invalid jumps allowed. Every action is logged in an **immutable audit trail**.
+
+---
 
 ## Architecture
 
@@ -45,280 +102,264 @@
 └──────────┘          └──────────┘      └─────┘
 ```
 
-### Stack
+### Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | React 18 + TypeScript + Ant Design + Redux Toolkit (RTK Query) |
-| **Backend API** | Django 5.1 + Django REST Framework + drf-spectacular (OpenAPI) |
-| **Authentication** | JWT (SimpleJWT) with refresh token and custom role claims |
-| **Async Tasks** | Celery + Redis (broker) |
-| **Scheduler** | Celery Beat |
-| **Database** | PostgreSQL 16 (uuid-ossp, pg_trgm, pg_stat_statements) |
-| **Cache** | Redis 7 |
-| **Storage** | AWS S3 |
-| **Monitoring** | Prometheus + Grafana |
-| **Infrastructure** | AWS EKS (Kubernetes) + Terraform + Helm |
-| **CI/CD** | GitHub Actions (OIDC, dual image build, health check + rollback) |
+| **Frontend** | React 18, TypeScript, Ant Design, Redux Toolkit (RTK Query) |
+| **Backend** | Django 5.1, Django REST Framework, drf-spectacular (OpenAPI) |
+| **Auth** | JWT (SimpleJWT) — access tokens (15 min), refresh (7 days), role claims |
+| **Data Pipeline** | Celery workers + Beat scheduler, Pydantic validation, batch processing |
+| **Database** | PostgreSQL 16 (pg_trgm for fuzzy search, uuid-ossp, pg_stat_statements) |
+| **Payments** | Stripe integration with circuit breaker, webhooks, idempotency keys |
+| **Monitoring** | Prometheus + Grafana (4 dashboards, 9 alert rules), audit trail |
+| **Infrastructure** | Terraform (9 AWS modules), Helm chart, GitHub Actions CI/CD |
 
-## Quick Start
+---
 
-### Prerequisites
+## Features
 
-- Docker & Docker Compose
+### For the Agency Admin
+- **Dashboard** — KPIs: active accounts, total balance, recovery rate, amount collected
+- **Analytics** — Collector performance, payment trends (daily/weekly/monthly), aging report
+- **SFTP Imports** — Automatic polling + manual trigger, job tracking with error details per row
+- **Settings** — Agency config, collector management (commission rates, account limits)
 
-### Run with Docker
+### For the Collector
+- **Worklist** — Personal queue filtered by status, priority, and balance range
+- **Account Detail** — Full timeline (notes, payments, status changes, imports), debtor info
+- **Actions** — Add notes, transition status (validated), record payments
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/ricardocanela/debtflow.git
-cd debtflow
+### Data Pipeline
+- **SFTP Polling** — Celery Beat polls every 15 min, or trigger manually from the UI
+- **Validation** — Each CSV row validated with Pydantic before database insertion
+- **Batch Processing** — 1000 records per transaction, errors isolated per row
+- **Idempotency** — `update_or_create` by `external_ref` — re-imports update, never duplicate
+- **Retry Logic** — 3 retries (polling) / 2 retries (processing) with exponential backoff
+- **Job Tracking** — Status, counts (ok/errors), error details with line numbers
 
-# 2. Start the full environment
-cd docker && docker compose up -d
+### Payments
+- **Stripe Integration** — Credit card, bank transfer, check, cash
+- **Circuit Breaker** — Protects against Stripe outages (5 failures → open → 30s recovery)
+- **Webhooks** — Async confirmation via Stripe webhook with signature verification
+- **Idempotency** — Prevents duplicate payments via idempotency key
 
-# 3. Seed demo data (creates agencies, collectors, accounts, payments, imports)
-docker compose exec api python manage.py seed_demo
+### Security & Compliance
+- **JWT Authentication** with short-lived tokens and role-based access control
+- **Immutable Audit Trail** — who, what, when, IP address, field-level diffs
+- **Encrypted SSN** at rest (last 4 digits only)
+- **Network Policies** — Pod-level isolation in Kubernetes
+- **IRSA** — Per-pod AWS permissions (principle of least privilege)
 
-# 4. Access the application
-# Frontend:  http://localhost:3000
-# API Docs:  http://localhost:8000/api/v1/docs/
-# Grafana:   http://localhost:3001 (admin/admin)
-```
+---
 
-This starts: **Frontend** (React dev server), **API** (Django + Gunicorn), **Celery worker**, **Celery Beat**, **PostgreSQL**, **Redis**, **SFTP test server**, **Prometheus**, and **Grafana**.
-
-### Demo Credentials
-
-The `seed_demo` command creates realistic demo data with the following user accounts:
-
-| Role | Username | Password | Access |
-|------|----------|----------|--------|
-| **Agency Admin** | `demo.admin` | `Demo@2026` | Full dashboard, all accounts, imports, settings, analytics |
-| **Collector** | `sarah.mitchell` | `Collector@2026` | Personal worklist, assigned accounts only |
-| **Collector** | `james.carter` | `Collector@2026` | Personal worklist, assigned accounts only |
-| **Collector** | `maria.gonzalez` | `Collector@2026` | Personal worklist, assigned accounts only |
-| **Collector** | `david.thompson` | `Collector@2026` | Personal worklist, assigned accounts only |
-
-### Roles
-
-| Role | Description | Permissions |
-|------|-------------|-------------|
-| **Superuser** | Platform administrator | Full access to everything including Django Admin |
-| **Agency Admin** | Agency manager/owner | Dashboard, all accounts in their agency, imports, settings, collector management |
-| **Collector** | Debt collector | Personal worklist, assigned accounts, add notes, record payments, change status |
-
-### Seed Data Details
-
-The `seed_demo` command populates the database with:
-
-- **1 Agency** — Apex Recovery Solutions (SFTP enabled)
-- **85 Debtors** — Realistic US names, addresses, emails, phones
-- **85 Accounts** — Across all statuses (NEW, ASSIGNED, IN_CONTACT, NEGOTIATING, PAYMENT_PLAN, SETTLED, CLOSED, DISPUTED)
-- **163 Payments** — Completed, pending, and failed payments
-- **442 Activities** — Import records, assignments, status changes, notes, payments
-- **7 Import Jobs** — 6 completed, 1 in progress
-- **4 Collectors** — Assigned to the agency with commission rates
-- **1 Payment Processor** — Stripe (test mode)
-
-```bash
-# Reset and re-seed demo data
-docker compose exec api python manage.py seed_demo --clear
-```
-
-### Local Development (without Docker)
-
-```bash
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements/local.txt
-
-# Copy environment file
-cp .env.example .env
-
-# Run migrations
-python manage.py migrate
-
-# Seed demo data
-python manage.py seed_demo
-
-# Start server
-python manage.py runserver
-```
-
-## Frontend
-
-The frontend is a **React 18 SPA** built with TypeScript, Ant Design, and Redux Toolkit (RTK Query).
-
-### Key Pages
-
-| Page | Route | Description |
-|------|-------|-------------|
-| **Login** | `/login` | JWT authentication with role-based redirect |
-| **Dashboard** | `/dashboard` | KPIs, recovery rate, payment trends, aging report |
-| **Worklist** | `/worklist` | Collector's assigned accounts with filters and search |
-| **Account Detail** | `/accounts/:id` | Full account view with timeline, debtor info, payments |
-| **Imports** | `/imports` | SFTP import job history with trigger button |
-| **Settings** | `/settings` | Agency and collector management |
-
-### Frontend Architecture
+## Data Ingestion — Deep Dive
 
 ```
-frontend/
-├── src/
-│   ├── api/            # RTK Query API slices (accounts, payments, imports, analytics)
-│   ├── components/     # Reusable UI components organized by feature
-│   ├── pages/          # Page-level components (Dashboard, Worklist, etc.)
-│   ├── hooks/          # Custom hooks (useRole, useAuth)
-│   ├── store/          # Redux store configuration
-│   └── types/          # TypeScript type definitions
+┌─────────────┐     poll      ┌──────────┐    download    ┌──────────┐
+│ SFTP Server │ ◄──────────── │  Celery  │ ──────────────►│  /tmp/   │
+│ (per agency)│               │  Beat    │                │  CSV     │
+└─────────────┘               └──────────┘                └────┬─────┘
+                                                               │
+                              ┌──────────┐    validate    ┌────▼─────┐
+                              │ Pydantic │ ◄───────────── │ CSVParser│
+                              │ Schema   │                │          │
+                              └────┬─────┘                └──────────┘
+                                   │
+                              ┌────▼──────────────┐
+                              │  BatchImporter     │
+                              │  1000 rows/batch   │
+                              │  atomic per row    │
+                              │  upsert Debtor     │
+                              │  upsert Account    │
+                              │  create Activity   │
+                              └────┬──────────────┘
+                                   │
+                              ┌────▼─────┐
+                              │ Import   │
+                              │ Job      │  status, ok, errors,
+                              │ (DB)     │  error_details[]
+                              └──────────┘
 ```
-
-## API Documentation
-
-Once running, access the interactive API docs at:
-
-- **Swagger UI:** http://localhost:8000/api/v1/docs/
-- **OpenAPI Schema:** http://localhost:8000/api/v1/schema/
-
-### Key Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/auth/token/` | Login (returns access + refresh JWT) |
-| POST | `/api/v1/auth/token/refresh/` | Renew access token |
-| GET | `/api/v1/auth/me/` | Authenticated user profile |
-| GET | `/api/v1/accounts/` | List accounts (filtered, paginated) |
-| GET | `/api/v1/accounts/{id}/` | Account detail |
-| POST | `/api/v1/accounts/{id}/transition/` | Change account status |
-| POST | `/api/v1/accounts/{id}/assign/` | Assign to collector |
-| POST | `/api/v1/accounts/{id}/add_note/` | Add note to timeline |
-| GET | `/api/v1/payments/` | List payments |
-| POST | `/api/v1/payments/` | Record payment |
-| POST | `/api/v1/payments/{id}/refund/` | Refund payment |
-| POST | `/api/v1/payments/webhook/stripe/` | Stripe webhook |
-| GET | `/api/v1/imports/` | List import jobs |
-| POST | `/api/v1/imports/trigger/` | Manually trigger SFTP import |
-| GET | `/api/v1/analytics/dashboard/` | Dashboard KPIs |
-| GET | `/api/v1/analytics/collectors/` | Collector performance |
-| GET | `/api/v1/analytics/payments/trends/` | Payment trends |
-| GET | `/api/v1/analytics/aging-report/` | Aging report |
-
-### Authentication
-
-```bash
-# Login
-curl -X POST http://localhost:8000/api/v1/auth/token/ \
-  -H "Content-Type: application/json" \
-  -d '{"username": "demo.admin", "password": "Demo@2026"}'
-
-# Response: {"access": "eyJ...", "refresh": "eyJ..."}
-
-# Use the token
-curl http://localhost:8000/api/v1/accounts/ \
-  -H "Authorization: Bearer eyJ..."
-```
-
-## Data Ingestion
-
-The platform automatically ingests debt portfolio files from creditor clients via **SFTP polling**.
-
-### How It Works
-
-1. **Scheduled Polling**: Celery Beat runs `sftp_poll_all_agencies` every 15 minutes
-2. **File Discovery**: For each active agency with SFTP enabled, the system:
-   - Connects to the configured SFTP server
-   - Lists CSV files in the remote directory
-   - Downloads new files to temporary storage
-3. **Async Processing**: Each file triggers a Celery task (`process_import_file`) that:
-   - Parses the CSV with Pydantic validation
-   - Processes records in batches of 1000
-   - Upserts `Debtor` records by `external_ref`
-   - Creates/updates `Account` records by `external_ref`
-   - Isolates errors per row (one bad record doesn't block the batch)
-4. **Job Tracking**: Each import creates an `SFTPImportJob` record with:
-   - Status (processing, completed, failed)
-   - Counts (total, processed_ok, processed_errors)
-   - Error details with line numbers and validation messages
-
-### Reliability Features
-
-- **Idempotency**: Imports are idempotent via `update_or_create` on `external_ref`. Re-importing the same file updates existing records instead of creating duplicates.
-- **Retry Logic**: 
-  - Polling task (`sftp_poll_all_agencies`): 3 retries with 60s delay on transient failures
-  - Import task (`process_import_file`): 2 retries with 120s delay on processing errors
-  - Failed imports are tracked in `SFTPImportJob` with detailed error logs for debugging
 
 ### CSV Format
 
-Required columns:
-- `external_ref` (unique identifier)
-- `debtor_name`
-- `original_amount` (must be positive)
+| Column | Required | Validation |
+|--------|----------|------------|
+| `external_ref` | Yes | Unique identifier, used for upsert |
+| `debtor_name` | Yes | Non-empty string |
+| `original_amount` | Yes | Positive decimal |
+| `debtor_ssn_last4` | No | Exactly 4 digits |
+| `debtor_email` | No | Valid email format |
+| `debtor_phone` | No | Phone string |
+| `due_date` | No | YYYY-MM-DD |
+| `creditor_name` | No | String |
+| `account_type` | No | String |
 
-Optional columns:
-- `debtor_ssn_last4` (exactly 4 digits)
-- `debtor_email`
-- `debtor_phone`
-- `due_date` (YYYY-MM-DD format)
-- `creditor_name`
-- `account_type`
-
-### Testing SFTP Ingestion
-
-```bash
-# Upload test CSV files to the SFTP test server
-python scripts/sftp_test_upload.py
-
-# Check import jobs via API
-curl -H "Authorization: Bearer <token>" http://localhost:8000/api/v1/imports/
-```
-
-## Local URLs
-
-| Service | URL | Description |
-|---------|-----|-------------|
-| **Frontend** | http://localhost:3000 | React SPA (Vite dev server) |
-| **API** | http://localhost:8000 | Django REST API |
-| **Swagger UI** | http://localhost:8000/api/v1/docs/ | Interactive API documentation |
-| **Django Admin** | http://localhost:8000/admin/ | Django admin panel |
-| **Prometheus** | http://localhost:9090 | Metrics collection |
-| **Grafana** | http://localhost:3001 | Dashboards (admin/admin) |
-| **API Metrics** | http://localhost:8000/metrics | Prometheus endpoint |
-| **Health Check** | http://localhost:8000/health/ | API health verification |
-
-## Testing
+### Testing the Pipeline
 
 ```bash
-make test          # All tests with coverage
-make test-unit     # Unit tests only
-make test-integration  # Integration tests only
-make lint          # Ruff lint + format check
-make typecheck     # Mypy type checking
+make sftp-upload    # Upload 3 sample CSVs (30 records total)
+                    # Then click "Trigger Import" on /imports
+make sftp-status    # See pending vs. processed files
+make sftp-reload    # Clear and re-upload for another cycle
 ```
+
+---
+
+## API
+
+Interactive docs at **http://localhost:8000/api/v1/docs/** (Swagger UI)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/auth/token/` | Login (JWT access + refresh) |
+| `POST` | `/api/v1/auth/token/refresh/` | Renew access token |
+| `GET` | `/api/v1/auth/me/` | Current user profile + role |
+| `GET` | `/api/v1/accounts/` | List accounts (filtered, paginated, searchable) |
+| `GET` | `/api/v1/accounts/{id}/` | Account detail with debtor info |
+| `POST` | `/api/v1/accounts/{id}/transition/` | Status transition (validated) |
+| `POST` | `/api/v1/accounts/{id}/assign/` | Assign to collector |
+| `POST` | `/api/v1/accounts/{id}/add_note/` | Add note to timeline |
+| `GET/POST` | `/api/v1/payments/` | List / record payments |
+| `POST` | `/api/v1/payments/{id}/refund/` | Refund a payment |
+| `POST` | `/api/v1/payments/webhook/stripe/` | Stripe webhook receiver |
+| `GET` | `/api/v1/imports/` | List import jobs with counts |
+| `POST` | `/api/v1/imports/trigger/` | Manually trigger SFTP poll |
+| `GET` | `/api/v1/analytics/dashboard/` | KPIs (accounts, balance, recovery rate) |
+| `GET` | `/api/v1/analytics/collectors/` | Per-collector performance |
+| `GET` | `/api/v1/analytics/payments/trends/` | Payment time series |
+| `GET` | `/api/v1/analytics/aging-report/` | Account aging distribution |
+
+---
 
 ## Infrastructure
 
-- **Terraform:** `infra/terraform/` — AWS modules (VPC, EKS, RDS, ElastiCache, S3, ECR, IAM, Secrets, DNS)
-- **Helm:** `infra/helm/debtflow/` — Kubernetes deployment chart (API, Worker, Beat, Frontend)
-- **CI/CD:** `.github/workflows/` — GitHub Actions pipelines (dual image build, health check + rollback)
-- **Monitoring:** `monitoring/` — Prometheus + Grafana dashboards
+### AWS (Terraform — 9 modules)
+
+```
+┌────────────────────────────────────────────────────────┐
+│                      AWS Account                       │
+│                                                        │
+│  ┌──────────────── VPC (10.0.0.0/16) ───────────────┐ │
+│  │  Public Subnets        Private Subnets            │ │
+│  │  ├── NAT Gateway       ├── EKS Worker Nodes       │ │
+│  │  └── ALB               ├── RDS PostgreSQL 16      │ │
+│  │                        └── ElastiCache Redis 7    │ │
+│  └───────────────────────────────────────────────────┘ │
+│                                                        │
+│  ECR (API + Frontend)    Secrets Manager    Route53    │
+│  S3 (file storage)       IAM/IRSA           ACM/SSL   │
+└────────────────────────────────────────────────────────┘
+```
+
+| Module | What It Manages |
+|--------|----------------|
+| `networking` | VPC, public/private subnets, NAT Gateway, Internet Gateway |
+| `eks` | EKS cluster, node groups, managed addons (CoreDNS, VPC CNI, EBS CSI) |
+| `database` | RDS PostgreSQL 16 (Multi-AZ in production) |
+| `cache` | ElastiCache Redis 7 |
+| `storage` | S3 with lifecycle (90d → Glacier, 365d → delete) |
+| `ecr` | Container registries for API and Frontend images |
+| `iam` | IRSA roles — worker (S3), API (Secrets), ALB controller |
+| `secrets` | Secrets Manager — DB password, Django key, Stripe, SFTP |
+| `dns` | Route53 hosted zone + ACM wildcard certificate |
+
+### Kubernetes (Helm Chart)
+
+- **API** — Gunicorn, 3 replicas (prod), service account with IRSA
+- **Worker** — Celery, 2 replicas, S3 + SFTP access
+- **Beat** — Celery scheduler, 1 replica
+- **Frontend** — Nginx serving React SPA, 2 replicas
+- **Ingress** — ALB, `/api/*` → API, `/*` → Frontend
+- **HPA** — Auto-scaling 3-10 pods at 70% CPU
+- **PDB** — Min 2 pods available during maintenance
+- **Network Policies** — Per-component traffic isolation
+- **Migration Job** — Helm hook runs `manage.py migrate` before each deploy
+- **CronJobs** — Weekly VACUUM, monthly audit log archival
+
+### CI/CD (GitHub Actions)
+
+```
+Push to main ──► CI Tests ──► Build API + Frontend ──► Push ECR ──► Deploy Staging
+                                                                        │
+Tag v*.*.* ──► Build ──► Push ECR ──► Deploy Production ──► Health Check
+                                                               ├── OK → Done
+                                                               └── Fail → Auto Rollback
+```
+
+### Environments
+
+| Environment | URL | Trigger |
+|-------------|-----|---------|
+| **Local** | localhost:3000 / :8000 | `make reset` |
+| **Staging** | staging.debtflow.example.com | Push to `main` |
+| **Production** | debtflow.example.com | Tag `v*.*.*` |
+
+---
+
+## Observability
+
+| Tool | URL | What It Shows |
+|------|-----|---------------|
+| **Grafana** | localhost:3001 | 4 dashboards (API, DB, Business, Celery) |
+| **Prometheus** | localhost:9090 | Metrics scraping (15s interval) |
+| **API Metrics** | localhost:8000/metrics | Django Prometheus endpoint |
+| **Health Check** | localhost:8000/health/ | Container/K8s probe |
+| **Swagger** | localhost:8000/api/v1/docs/ | Interactive API docs |
+
+**Grafana Dashboards:** API Overview (RPS, error rate, P95 latency) · Database Health (connections, query duration, cache hit ratio) · Business Metrics (payments/hour, collected today, import success rate) · Celery Workers (tasks/min, duration by type, failures)
+
+**9 Alert Rules:** High API latency · High error rate · Database connections · Celery queue backlog · SFTP import failures · Stripe circuit breaker · Pod crash loops · Disk usage
+
+---
+
+## Development
+
+### Makefile Commands
+
+```bash
+make help           # Show all commands
+make reset          # Full reset: rebuild, seed, upload SFTP (~2 min)
+make dev-d          # Start services in background
+make down           # Stop services
+make seed           # Seed demo data (85 accounts, 163 payments, etc.)
+make seed-clear     # Clear and re-seed
+make sftp-upload    # Upload sample CSVs to SFTP server
+make sftp-reload    # Clear SFTP + re-upload (ready for new import cycle)
+make sftp-status    # Show pending vs. processed files
+make worker-logs    # Tail Celery worker logs
+make api-logs       # Tail API logs
+make shell          # Django shell
+make test           # Tests with coverage
+make lint           # Ruff lint + format
+make helm-lint      # Lint Helm chart
+make tf-validate    # Validate Terraform
+```
+
+### Seed Data
+
+`make seed` creates a realistic demo environment:
+
+- **1 Agency** — Apex Recovery Solutions (SFTP enabled)
+- **4 Collectors** — With commission rates and account limits
+- **85 Accounts** — Across all 8 statuses with weighted distribution
+- **163 Payments** — Completed, pending, and failed
+- **442 Activities** — Full timeline history
+- **7 Import Jobs** — With real success/error counts
+
+---
 
 ## Documentation
 
-- [Product Overview](docs/debtflow-product.md) — Full product description, features, and value proposition
-- [AWS & Kubernetes Infrastructure](docs/aula-infraestrutura-aws-kubernetes.md) — Complete infrastructure guide
-- [Architecture Overview](docs/architecture.md)
-- [ADRs](docs/adrs/) — Architecture Decision Records
-- [Runbooks](docs/runbooks/) — Incident response procedures
-- [API Guide](docs/api.md)
-
-## License
-
-This is a portfolio project. Not licensed for production use.
+| Document | Description |
+|----------|-------------|
+| [Product Overview](docs/debtflow-product.md) | Full product description, value proposition, features |
+| [Infrastructure Guide](docs/aula-infraestrutura-aws-kubernetes.md) | Complete AWS + Kubernetes walkthrough |
+| [Architecture](docs/architecture.md) | System design and component overview |
+| [ADRs](docs/adrs/) | Architecture Decision Records |
+| [Runbooks](docs/runbooks/) | Incident response procedures |
+| [API Guide](docs/api.md) | Detailed API documentation |
 
 ---
 

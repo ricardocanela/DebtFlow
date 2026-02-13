@@ -15,13 +15,19 @@ down: ## Stop development environment
 
 # Database
 migrate: ## Run database migrations
-	python manage.py migrate
+	docker compose -f docker/docker-compose.yml exec api python manage.py migrate
 
 makemigrations: ## Create new migrations
-	python manage.py makemigrations
+	docker compose -f docker/docker-compose.yml exec api python manage.py makemigrations
 
-seed: ## Load seed data
-	python scripts/seed_data.py
+seed: ## Seed demo data (agencies, collectors, accounts, payments)
+	docker compose -f docker/docker-compose.yml exec api python manage.py seed_demo
+
+seed-clear: ## Clear and re-seed demo data from scratch
+	docker compose -f docker/docker-compose.yml exec api python manage.py seed_demo --clear
+
+shell: ## Open Django shell inside container
+	docker compose -f docker/docker-compose.yml exec api python manage.py shell
 
 # Testing
 test: ## Run all tests
@@ -87,6 +93,48 @@ frontend-build: ## Build frontend for production
 
 frontend-lint: ## Lint frontend code
 	cd frontend && npm run lint
+
+# SFTP
+sftp-upload: ## Upload sample CSVs to SFTP server
+	docker compose -f docker/docker-compose.yml cp docker/sftp-samples/new_placements_feb2026.csv sftp-test-server:/home/sftpuser/upload/
+	docker compose -f docker/docker-compose.yml cp docker/sftp-samples/portfolio_transfer_march2026.csv sftp-test-server:/home/sftpuser/upload/
+	docker compose -f docker/docker-compose.yml cp docker/sftp-samples/urgent_placements_feb13.csv sftp-test-server:/home/sftpuser/upload/
+	@echo "3 CSV files uploaded. Click 'Trigger Import' on /imports."
+
+sftp-clear: ## Clear all files from SFTP server
+	docker compose -f docker/docker-compose.yml exec sftp-test-server sh -c "rm -rf /home/sftpuser/upload/* /home/sftpuser/upload/processed/* 2>/dev/null; mkdir -p /home/sftpuser/upload/processed"
+	@echo "SFTP server cleared."
+
+sftp-reload: ## Clear SFTP and upload fresh samples
+	$(MAKE) sftp-clear
+	$(MAKE) sftp-upload
+
+sftp-status: ## Show files on the SFTP server
+	@echo "=== Pending (upload/) ==="
+	@docker compose -f docker/docker-compose.yml exec sftp-test-server ls -la /home/sftpuser/upload/ 2>/dev/null || true
+	@echo ""
+	@echo "=== Processed ==="
+	@docker compose -f docker/docker-compose.yml exec sftp-test-server ls -la /home/sftpuser/upload/processed/ 2>/dev/null || true
+
+# Reset
+reset: ## Full reset: destroy volumes, rebuild, seed, upload SFTP samples
+	docker compose -f docker/docker-compose.yml down -v
+	docker compose -f docker/docker-compose.yml up --build -d
+	@echo "Waiting for services to start..."
+	@sleep 12
+	$(MAKE) seed
+	$(MAKE) sftp-upload
+	@echo "Reset complete. Frontend: http://localhost:3000"
+
+# Logs
+worker-logs: ## Tail Celery worker logs
+	docker compose -f docker/docker-compose.yml logs -f worker
+
+beat-logs: ## Tail Celery Beat logs
+	docker compose -f docker/docker-compose.yml logs -f beat
+
+api-logs: ## Tail API logs
+	docker compose -f docker/docker-compose.yml logs -f api
 
 # Cleanup
 clean: ## Remove cached files

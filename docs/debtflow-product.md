@@ -235,24 +235,63 @@ Immutable record of all actions in the system:
 # 1. Clone the repository
 git clone <repo-url> && cd debtflow
 
-# 2. Start the full environment
-cd docker && docker compose up -d
+# 2. Full setup in one command (build, seed, upload SFTP samples)
+make reset
 
-# 3. Populate with demo data
-docker compose exec api python manage.py seed_demo
-
-# 4. Access
+# 3. Access
 # Frontend: http://localhost:3000
 # API Docs: http://localhost:8000/api/v1/docs/
 # Grafana:  http://localhost:3001 (admin/admin)
+```
+
+Or step by step:
+
+```bash
+make dev-d          # Start all services
+make seed           # Seed demo data
+make sftp-upload    # Upload sample CSVs to the SFTP test server
 ```
 
 ### Demo Credentials
 
 | Role | Username | Password | Access |
 |--------|----------|----------|--------|
-| **Admin** | demo.admin | Demo@2026 | Dashboard, all accounts, imports, settings |
+| **Agency Admin** | demo.admin | Demo@2026 | Dashboard, all accounts, imports, settings, analytics |
 | **Collector** | sarah.mitchell | Collector@2026 | Personal worklist, assigned accounts |
+| **Collector** | james.carter | Collector@2026 | Personal worklist, assigned accounts |
+| **Collector** | maria.gonzalez | Collector@2026 | Personal worklist, assigned accounts |
+| **Collector** | david.thompson | Collector@2026 | Personal worklist, assigned accounts |
+
+### SFTP Test Server
+
+A local SFTP server (`atmoz/sftp`) runs as part of Docker Compose. It starts empty — sample CSVs are uploaded via `make sftp-upload`.
+
+| Command | Description |
+|---------|-------------|
+| `make sftp-upload` | Upload 3 sample CSVs to the SFTP server |
+| `make sftp-status` | Show pending vs. processed files |
+| `make sftp-reload` | Clear and re-upload samples for a new test cycle |
+| `make sftp-clear` | Remove all files from the SFTP server |
+
+After uploading, click **"Trigger Import"** on `/imports` or wait for Celery Beat's 15-minute automatic poll. Processed files are moved to `/upload/processed/` to prevent re-importing.
+
+### Makefile Reference
+
+Run `make help` to see all commands. Key ones:
+
+| Command | Description |
+|---------|-------------|
+| `make reset` | Full reset: destroy volumes, rebuild, seed, upload SFTP |
+| `make dev-d` | Start all services in background |
+| `make down` | Stop all services |
+| `make seed` | Seed demo data |
+| `make seed-clear` | Clear and re-seed demo data |
+| `make shell` | Open Django shell |
+| `make worker-logs` | Tail Celery worker logs |
+| `make test` | Run all tests with coverage |
+| `make lint` | Ruff lint + format check |
+| `make helm-lint` | Lint Helm chart |
+| `make tf-validate` | Validate Terraform |
 
 ### Typical Usage Flow
 

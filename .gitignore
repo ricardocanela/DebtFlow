@@ -31,6 +31,7 @@ static_collected/
 # IDE
 .idea/
 .vscode/
+.claude/
 *.swp
 *.swo
 *~
